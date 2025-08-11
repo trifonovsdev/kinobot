@@ -23,13 +23,13 @@ cd kinobot
 
 2) Установить зависимости
 
-macOS / Linux (bash):
+macOS / Linux:
 ```bash
 python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-Windows (PowerShell):
+Windows:
 ```powershell
 python -m pip install --upgrade pip
 pip install -r requirements.txt
@@ -65,7 +65,7 @@ python main.py
 - Пароль: root
 - Изменение логики логина: `app/web/app.py`
 
-Конфигурация (.env)
+Конфигурация env
 
 Создайте файл `.env` в корне проекта и заполните необходимые параметры:
 
@@ -110,7 +110,7 @@ pip install -r requirements.txt
 python main.py
 ```
 
-Windows (PowerShell)
+Windows
 
 ```powershell
 # 1) Зависимости
@@ -124,7 +124,7 @@ pip install -r requirements.txt
 python main.py
 ```
 
-Частые вопросы
+Возможные проблемы
 
 - `TMDB_API_KEY не задан в .env` — зарегайтесь в TMDb и получите апикей, заполните `.env` и перезапустите.
 
