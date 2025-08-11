@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Панель администратора</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='admin.css') }}?v=5">
+    <link rel="stylesheet" href="https://unpkg.com/@tabler/icons-webfont@2.47.0/tabler-icons.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', path='favicon.svg') }}">
+    <meta name="theme-color" content="#0f1115">
+</head>
+<body>
+    <div id="notificationContainer"></div>
+    <div class="page-container">
+        <header class="main-header">
+            <div class="header-content">
+                <div class="brand">
+                    <img class="brand-logo" src="{{ url_for('static', path='logo.svg') }}" alt="KinoBot" width="28" height="28">
+                    <span class="brand-text">Панель администратора</span>
+                </div>
+                <div class="header-actions">
+                    <button id="themeToggle" class="theme-toggle" aria-label="Переключить тему" data-state="dark">
+                        <i class="ti ti-moon"></i><span class="label">Тёмная</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+        
+        <!-- Update Banner -->
+        <div id="updateBanner" style="display:none;margin:14px 0;padding:12px 14px;border:1px solid var(--border);border-radius:10px;background:var(--panel);">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <i class="ti ti-refresh" style="font-size:20px;color:var(--brand);"></i>
+                    <div>
+                        <div id="updateText" style="font-weight:600;">Доступно обновление</div>
+                        <div id="updateSub" class="small" style="font-size:12px;color:var(--muted);"></div>
+                    </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <button id="updateNowBtn" class="nav-btn" style="margin:0;">
+                        <span class="btn-icon"><i class="ti ti-rocket"></i></span>
+                        Обновить сейчас
+                    </button>
+                </div>
+            </div>
+            <div id="updateNotesWrap" style="display:none;margin-top:10px;padding-top:8px;border-top:1px dashed var(--border);">
+                <div style="display:flex;align-items:center;gap:8px;cursor:default;color:var(--muted);font-size:12px;margin-bottom:6px;">
+                    <i class="ti ti-info-circle"></i>
+                    <span>Информация об обновлении</span>
+                </div>
+                <pre id="updateNotes" style="white-space:pre-wrap;margin:0;font-family:inherit;line-height:1.35;color:var(--text);"></pre>
+            </div>
+        </div>
+        
+        <nav class="main-nav">
+            <button id="addFilmBtn" class="nav-btn active">
+                <span class="btn-icon"><i class="ti ti-plus"></i></span>
+                Добавить фильм
+            </button>
+            <button id="filmListBtn" class="nav-btn">
+                <span class="btn-icon"><i class="ti ti-list-details"></i></span>
+                Список фильмов
+            </button>
+            <button id="statsBtn" class="nav-btn">
+                <span class="btn-icon"><i class="ti ti-chart-pie-2"></i></span>
+                Статистика <span class="badge-new">NEW</span>
+            </button>
+            <button id="autoImportBtn" class="nav-btn">
+                <span class="btn-icon"><i class="ti ti-cloud-download"></i></span>
+                Авто-залив <span class="badge-new">NEW</span>
+            </button>
+            <button id="userManagementBtn" class="nav-btn">
+                <span class="btn-icon"><i class="ti ti-users"></i></span>
+                Пользователи
+            </button>
+        </nav>
+
+        <main class="main-content">
+            <div id="addFilmSection" class="section active">
+                <div class="section-header">
+                    <h2>Добавить новый фильм</h2>
+                </div>
+                <form id="addFilmForm" class="form-grid">
+                    <div class="form-group">
+                        <label for="filmName">Название фильма</label>
+                        <input type="text" id="filmName" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="filmGenre">Жанры</label>
+                        <select id="filmGenre" name="genre" multiple required>
+                            <option value="">Выберите жанр</option>
+                            <option value="Боевик">Боевик</option>
+                            <option value="Приключения">Приключения</option>
+                            <option value="Мультфильм">Мультфильм</option>
+                            <option value="Комедия">Комедия</option>
+                            <option value="Криминал">Криминал</option>
+                            <option value="Документальный">Документальный</option>
+                            <option value="Драма">Драма</option>
+                            <option value="Семейный">Семейный</option>
+                            <option value="Фэнтези">Фэнтези</option>
+                            <option value="История">История</option>
+                            <option value="Ужасы">Ужасы</option>
+                            <option value="Музыка">Музыка</option>
+                            <option value="Детектив">Детектив</option>
+                            <option value="Мелодрама">Мелодрама</option>
+                            <option value="Фантастика">Фантастика</option>
+                            <option value="Телефильм">Телефильм</option>
+                            <option value="Триллер">Триллер</option>
+                            <option value="Военный">Военный</option>
+                            <option value="Вестерн">Вестерн</option>
+                        </select>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="filmDescription">Описание</label>
+                        <textarea id="filmDescription" name="description" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="filmSite">Ссылка на сайт для просмотра</label>
+                        <input type="url" id="filmSite" name="site">
+                    </div>
+                    <div class="form-group">
+                        <div class="file-input">
+                            <label for="filmImage">Выберите изображение</label>
+                            <input type="file" id="filmImage" name="image" accept="image/*">
+                        </div>
+                        <div id="imagePreview" class="image-preview"></div>
+                    </div>
+                    <div class="form-group full-width">
+                        <button type="submit" class="submit-btn">
+                            <i class="ti ti-plus"></i>
+                            Добавить фильм
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div id="filmListSection" class="section">
+                <div class="section-header">
+                    <h2>Список фильмов</h2>
+                </div>
+                <div class="search-filter-container">
+                    <input type="text" id="searchFilm" placeholder="Поиск по названию или ID..." class="search-input">
+                    <select id="filterGenre" class="filter-select">
+                        <option value="all">Все жанры</option>
+                        <option value="Боевик">Боевик</option>
+                        <option value="Приключения">Приключения</option>
+                        <option value="Мультфильм">Мультфильм</option>
+                        <option value="Комедия">Комедия</option>
+                        <option value="Криминал">Криминал</option>
+                        <option value="Документальный">Документальный</option>
+                        <option value="Драма">Драма</option>
+                        <option value="Семейный">Семейный</option>
+                        <option value="Фэнтези">Фэнтези</option>
+                        <option value="История">История</option>
+                        <option value="Ужасы">Ужасы</option>
+                        <option value="Музыка">Музыка</option>
+                        <option value="Детектив">Детектив</option>
+                        <option value="Мелодрама">Мелодрама</option>
+                        <option value="Фантастика">Фантастика</option>
+                        <option value="Телефильм">Телефильм</option>
+                        <option value="Триллер">Триллер</option>
+                        <option value="Военный">Военный</option>
+                        <option value="Вестерн">Вестерн</option>
+                    </select>
+                </div>
+                <div class="table-container">
+                    <table id="filmList">
+                        <thead>
+                            <tr>
+                                <th>Код</th>
+                                <th>Название</th>
+                                <th>Жанр</th>
+                                <th>Сайт</th>
+                                <th>Постер</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <div id="pagination" class="pagination"></div>
+            </div>
+
+            <div id="autoImportSection" class="section">
+                <div class="section-header">
+                    <h2>Авто-залив из TMDb <span class="badge-new">NEW</span></h2>
+                </div>
+                <div class="search-filter-container">
+                    <input type="text" id="tmdbQuery" placeholder="Введите название фильма" class="search-input">
+                    <button id="tmdbSearchBtn" class="submit-btn"><i class="ti ti-search"></i> Найти</button>
+                </div>
+                <div class="search-filter-container">
+                    <input type="number" id="tmdbPopularCount" min="2" max="50" value="" class="search-input" placeholder="Кол-во (2-50)" style="max-width:140px">
+                    <button id="tmdbPopularBtn" class="submit-btn"><i class="ti ti-cloud-download"></i> Импортировать популярные фильмы</button>
+                </div>
+                <div class="table-container">
+                    <table id="tmdbResults">
+                        <thead>
+                            <tr>
+                                <th>Постер</th>
+                                <th>Название</th>
+                                <th>Год</th>
+                                <th>Описание</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <div id="taskQueueSection" class="task-queue" style="margin-top:16px">
+                    <div class="section-header" style="margin-bottom:8px">
+                        <h3 style="font-size:16px;display:flex;align-items:center;gap:8px">
+                            <i class="ti ti-progress-check"></i> Очередь задач (TMDb)
+                        </h3>
+                    </div>
+                    <div id="taskList" class="task-list" style="display:flex;flex-direction:column;gap:8px"></div>
+                </div>
+            </div>
+
+            <div id="statsSection" class="section">
+                <div class="section-header">
+                    <h2>Статистика <span class="badge-new">NEW</span></h2>
+                </div>
+                <div class="stats-kpis">
+                    <div class="kpi-card">
+                        <div class="kpi-title"><i class="ti ti-movie"></i> Фильмы</div>
+                        <div class="kpi-value" id="kpiFilms">0</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-title"><i class="ti ti-users"></i> Пользователи</div>
+                        <div class="kpi-value" id="kpiUsers">0</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-title"><i class="ti ti-shield-check"></i> Трафферы</div>
+                        <div class="kpi-value" id="kpiAdmins">0</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-title"><i class="ti ti-user-exclamation"></i> Забанены</div>
+                        <div class="kpi-value" id="kpiBanned">0</div>
+                    </div>
+                </div>
+                <div class="chart-grid">
+                    <div class="chart-card">
+                        <div class="chart-title"><i class="ti ti-chart-donut-2"></i> Жанры фильмов</div>
+                        <canvas id="filmGenreChart" height="180"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-title"><i class="ti ti-chart-pie-2"></i> Состав пользователей</div>
+                        <canvas id="usersBreakdownChart" height="180"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-title"><i class="ti ti-activity"></i> Рефералы (7 дней)</div>
+                        <canvas id="referralsChart" height="180"></canvas>
+                    </div>
+                </div>
+                <div class="recent-block">
+                    <h3>Недавние добавления</h3>
+                    <ul id="recentAdditions"></ul>
+                </div>
+            </div>
+
+            <div id="userManagementSection" class="section">
+                <div class="section-header">
+                    <h2>Управление пользователями</h2>
+                </div>
+                <div class="table-container">
+                    <table id="userList">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Имя</th>
+                                <th>Telegram ID</th>
+                                <th>Статус</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+
+        <div id="editFilmModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Редактировать фильм</h2>
+                    <button class="close">&times;</button>
+                </div>
+                <form id="editFilmForm" class="form-grid">
+                    <input type="hidden" id="editFilmId" name="id">
+                    <div class="form-group">
+                        <label for="editFilmName">Название фильма</label>
+                        <input type="text" id="editFilmName" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editFilmGenre">Жанры</label>
+                        <select id="editFilmGenre" name="genre" multiple required>
+                            <option value="">Выберите жанр</option>
+                            <option value="Боевик">Боевик</option>
+                            <option value="Приключения">Приключения</option>
+                            <option value="Мультфильм">Мультфильм</option>
+                            <option value="Комедия">Комедия</option>
+                            <option value="Криминал">Криминал</option>
+                            <option value="Документальный">Документальный</option>
+                            <option value="Драма">Драма</option>
+                            <option value="Семейный">Семейный</option>
+                            <option value="Фэнтези">Фэнтези</option>
+                            <option value="История">История</option>
+                            <option value="Ужасы">Ужасы</option>
+                            <option value="Музыка">Музыка</option>
+                            <option value="Детектив">Детектив</option>
+                            <option value="Мелодрама">Мелодрама</option>
+                            <option value="Фантастика">Фантастика</option>
+                            <option value="Телефильм">Телефильм</option>
+                            <option value="Триллер">Триллер</option>
+                            <option value="Военный">Военный</option>
+                            <option value="Вестерн">Вестерн</option>
+                        </select>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="editFilmDescription">Описание</label>
+                        <textarea id="editFilmDescription" name="description" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="editFilmSite">Ссылка на сайт для просмотра</label>
+                        <input type="url" id="editFilmSite" name="site">
+                    </div>
+                    <div class="form-group">
+                        <div class="file-input">
+                            <label for="editFilmImage">Изменить изображение</label>
+                            <input type="file" id="editFilmImage" name="image" accept="image/*">
+                        </div>
+                        <div id="editImagePreview" class="image-preview"></div>
+                    </div>
+                    <div class="form-group full-width">
+                        <button type="submit" class="submit-btn">
+                            <i class="ti ti-device-floppy"></i>
+                            Сохранить изменения
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script src="{{ url_for('static', path='admin.js') }}?v=7"></script>
+</body>
+</html>
+

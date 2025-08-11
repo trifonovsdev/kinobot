@@ -1,0 +1,16 @@
+2025-08-11 16:28:59,901 INFO: Starting updater. Plan: C:\Temp\kb_update_plan.json
+2025-08-11 16:28:59,901 INFO: Using pre-staged directory: C:\Temp\kb_upd_3dhv2y0c\payload
+2025-08-11 16:29:00,109 INFO: Backup created: D:\kinobot\backups\backup_20250811_162859.zip
+2025-08-11 16:29:00,110 INFO: RUN: C:\Users\anarchy\AppData\Local\Programs\Python\Python311\python.exe -m pip install -U pip
+2025-08-11 16:29:02,044 INFO: RUN: C:\Users\anarchy\AppData\Local\Programs\Python\Python311\python.exe -m pip install -r C:\Temp\kb_upd_3dhv2y0c\payload\requirements.txt
+2025-08-11 16:29:03,012 INFO: Overlay copying files to D:\kinobot
+2025-08-11 16:29:03,024 INFO: VERSION updated to v3.1
+2025-08-11 16:29:03,024 INFO: Restarting app (spawn): C:\Users\anarchy\AppData\Local\Programs\Python\Python311\python.exe main.py
+2025-08-11 16:29:03,042 INFO: Updater finished OK
+2025-08-11 17:13:17,767 INFO: Starting updater. Plan: C:\Temp\kb_update_plan.json
+2025-08-11 17:13:17,767 INFO: Using pre-staged directory: C:\Temp\kb_upd_zaalay7j\payload
+2025-08-11 17:13:17,861 INFO: Backup created: D:\kinobot\backups\backup_20250811_171317.zip
+2025-08-11 17:13:17,861 INFO: Overlay copying files to D:\kinobot
+2025-08-11 17:13:17,862 INFO: VERSION updated to v4
+2025-08-11 17:13:17,862 INFO: Restarting app (spawn): C:\Users\anarchy\AppData\Local\Programs\Python\Python311\python.exe main.py
+2025-08-11 17:13:17,866 INFO: Updater finished OK
