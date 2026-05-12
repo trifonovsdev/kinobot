@@ -1,63 +1,67 @@
-import socketio
-from app.db.sqlite import get_db_connection
+"""
+Socket.IO server for real-time updates.
+"""
 
-sio = socketio.AsyncServer(async_mode='asgi', cors_allowed_origins='*')
-sio_app = socketio.ASGIApp(sio)
+import socketio
+
+from app.repositories.film_repository import film_repository
+from app.repositories.user_repository import user_repository
+
+sio = socketio.AsyncServer(async_mode="asgi", cors_allowed_origins="*")
 
 
 @sio.event
 async def connect(sid, environ):
-    await get_films()
-    await get_users()
+    """On client connect — send initial data."""
+    await emit_films()
+    await emit_users()
 
 
 @sio.event
 async def get_films(sid=None):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM films ORDER BY id DESC")
-    films = [dict(row) for row in cursor.fetchall()]
-    conn.close()
-    await sio.emit('update_films', films)
-    await sio.emit('films', films)
+    """Client requests film list refresh."""
+    await emit_films()
 
 
 @sio.event
 async def get_users(sid=None):
-    conn = get_db_connection('users.db')
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM users ORDER BY id DESC")
-    users = [dict(row) for row in cursor.fetchall()]
-    conn.close()
-    await sio.emit('update_users', users)
-    await sio.emit('users', users)
+    """Client requests user list refresh."""
+    await emit_users()
 
 
 @sio.event
-async def delete_film(sid, id: int):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT name, code FROM films WHERE id = ?", (id,))
-    film = cursor.fetchone()
-    if film:
-        film_name = film['name']
-        film_code = film['code'] if 'code' in film.keys() else None
-        cursor.execute("DELETE FROM films WHERE id = ?", (id,))
-        conn.commit()
-        # Если таблица фильмов стала пустой, сбрасываем автонумерацию ID
-        try:
-            cursor.execute("SELECT COUNT(*) FROM films")
-            cnt = cursor.fetchone()[0]
-            if cnt == 0:
-                cursor.execute("DELETE FROM sqlite_sequence WHERE name='films'")
-                conn.commit()
-        except Exception:
-            # На случай необычной конфигурации SQLite просто игнорируем сбой сброса последовательности
-            pass
-        conn.close()
-        code_part = f" Код: {film_code}" if film_code else f" ID: {id}"
-        await sio.emit('notification', {'message': f'Фильм "{film_name}" удален.{code_part}', 'type': 'info'})
-        await get_films()
+async def delete_film(sid, film_id: int):
+    """Delete a film via socket."""
+    result = await film_repository.delete(int(film_id))
+    if result:
+        name = result.get("name", "")
+        code = result.get("code", film_id)
+        await sio.emit("notification", {
+            "message": f'Фильм "{name}" удалён. Код: {code}',
+            "type": "info",
+        })
+        await emit_films()
     else:
-        conn.close()
-        await sio.emit('notification', {'message': f'Фильм с кодом {id} не найден', 'type': 'error'})
+        await sio.emit("notification", {
+            "message": f"Фильм #{film_id} не найден",
+            "type": "error",
+        })
+
+
+async def emit_films() -> None:
+    """Broadcast updated film list."""
+    films = await film_repository.get_all()
+    await sio.emit("update_films", films)
+    await sio.emit("films", films)
+
+
+async def emit_users() -> None:
+    """Broadcast updated user list."""
+    users = await user_repository.get_all()
+    await sio.emit("update_users", users)
+    await sio.emit("users", users)
+
+
+async def notify(event: str, data) -> None:
+    """Generic notification emission (used by task_service)."""
+    await sio.emit(event, data)
