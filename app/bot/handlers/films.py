@@ -46,7 +46,7 @@ async def cb_genre_selected(callback: CallbackQuery, bot: Bot):
 
     if film:
         await callback.answer()
-        await _send_film_card(callback.message.chat.id, film, bot)
+        await _send_film_card(callback.message.chat.id, film, bot, user_id=callback.from_user.id)
     else:
         await callback.answer("Фильмов этого жанра пока нет 😔", show_alert=False)
         kb = await genre_kb()
@@ -61,7 +61,7 @@ async def handle_film_code(message: Message, bot: Bot):
     """Handle numeric film code input."""
     film = await film_repository.get_by_code_or_id(message.text.strip())
     if film:
-        await _send_film_card(message.chat.id, film, bot)
+        await _send_film_card(message.chat.id, film, bot, user_id=message.from_user.id if message.from_user else 0)
     else:
         await message.answer(
             "❌ Фильм с таким кодом не найден.\n\n"
@@ -83,8 +83,10 @@ async def handle_unknown(message: Message, bot: Bot):
 # Helpers
 # ============================================================
 
-async def _send_film_card(chat_id: int, film: dict, bot: Bot) -> None:
+async def _send_film_card(chat_id: int, film: dict, bot: Bot, user_id: int = 0) -> None:
     """Send a beautiful film card with poster."""
+    from app.repositories.interaction_repository import interaction_repository
+
     MAX_CAPTION = 1024
 
     name = (film.get("name") or "")[:256]
@@ -92,9 +94,35 @@ async def _send_film_card(chat_id: int, film: dict, bot: Bot) -> None:
     desc = (film.get("description") or "").strip()
     code = film.get("code") or film.get("id")
     watch_url = film.get("site") or None
+    film_id = film.get("id")
+
+    # Record watch history
+    if user_id and film_id:
+        try:
+            await interaction_repository.record_watch(user_id, film_id)
+        except Exception:
+            pass
+
+    # Get rating info
+    rating_info = ""
+    if film_id:
+        try:
+            rating = await interaction_repository.get_film_rating(film_id)
+            if rating["count"] > 0:
+                rating_info = f"\n⭐ {rating['average']}/5 ({rating['count']} оценок)"
+        except Exception:
+            pass
+
+    # Check if favorite
+    is_fav = False
+    if user_id and film_id:
+        try:
+            is_fav = await interaction_repository.is_favorite(user_id, film_id)
+        except Exception:
+            pass
 
     # Build caption
-    base = f"🎬 <b>{name}</b>\n🎭 {genre}\n\n"
+    base = f"🎬 <b>{name}</b>\n🎭 {genre}{rating_info}\n\n"
     footer = f"\n\n🔢 Код: <code>{code}</code>"
     available = MAX_CAPTION - len(base) - len(footer)
 
@@ -108,7 +136,7 @@ async def _send_film_card(chat_id: int, film: dict, bot: Bot) -> None:
     if len(caption) > MAX_CAPTION:
         caption = caption[:MAX_CAPTION - 1] + "…"
 
-    kb = film_kb(watch_url)
+    kb = film_kb(watch_url, film_id=film_id, is_fav=is_fav)
 
     # Try sending with poster
     if film.get("photo_id"):

@@ -10,9 +10,12 @@ from app.repositories.film_repository import film_repository
 def main_menu_kb() -> InlineKeyboardMarkup:
     """Main menu keyboard."""
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🎬 Поиск фильмов", callback_data="menu:search")],
-        [InlineKeyboardButton(text="🎲 Подобрать фильм", callback_data="menu:pick")],
-        [InlineKeyboardButton(text="👤 Профиль", callback_data="menu:profile")],
+        [InlineKeyboardButton(text="🎬 Поиск фильмов", callback_data="menu:search"),
+         InlineKeyboardButton(text="🎲 Подобрать", callback_data="menu:pick")],
+        [InlineKeyboardButton(text="⭐ Избранное", callback_data="menu:favorites"),
+         InlineKeyboardButton(text="🎯 Для вас", callback_data="menu:recommend")],
+        [InlineKeyboardButton(text="📜 История", callback_data="menu:history"),
+         InlineKeyboardButton(text="👤 Профиль", callback_data="menu:profile")],
     ])
 
 
@@ -39,13 +42,30 @@ async def genre_kb() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
-def film_kb(watch_url: str | None = None) -> InlineKeyboardMarkup | None:
-    """Film card keyboard with watch button."""
-    if not watch_url:
-        return None
-    return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="▶️ Смотреть", url=watch_url)]
-    ])
+def film_kb(watch_url: str | None = None, film_id: int | None = None, is_fav: bool = False) -> InlineKeyboardMarkup:
+    """Film card keyboard with watch, favorite, and rate buttons."""
+    rows = []
+    if watch_url:
+        rows.append([InlineKeyboardButton(text="▶️ Смотреть", url=watch_url)])
+    action_row = []
+    if film_id:
+        if is_fav:
+            action_row.append(InlineKeyboardButton(text="💔 Убрать", callback_data=f"fav:rm:{film_id}"))
+        else:
+            action_row.append(InlineKeyboardButton(text="⭐ В избранное", callback_data=f"fav:add:{film_id}"))
+        action_row.append(InlineKeyboardButton(text="⭐1-5", callback_data=f"rate:show:{film_id}"))
+    if action_row:
+        rows.append(action_row)
+    # Rating row shortcut
+    if film_id:
+        rows.append([
+            InlineKeyboardButton(text="1⭐", callback_data=f"rate:{film_id}:1"),
+            InlineKeyboardButton(text="2⭐", callback_data=f"rate:{film_id}:2"),
+            InlineKeyboardButton(text="3⭐", callback_data=f"rate:{film_id}:3"),
+            InlineKeyboardButton(text="4⭐", callback_data=f"rate:{film_id}:4"),
+            InlineKeyboardButton(text="5⭐", callback_data=f"rate:{film_id}:5"),
+        ])
+    return InlineKeyboardMarkup(inline_keyboard=rows) if rows else None
 
 
 def profile_kb(is_admin: bool = False) -> InlineKeyboardMarkup:

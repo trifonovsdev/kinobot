@@ -128,6 +128,39 @@ async def init_databases() -> None:
             FOREIGN KEY (referrer_id) REFERENCES users(tg_id),
             FOREIGN KEY (referred_id) REFERENCES users(tg_id)
         )""")
+        # Favorites
+        await db.execute("""CREATE TABLE IF NOT EXISTS favorites(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            tg_id INTEGER NOT NULL,
+            film_id INTEGER NOT NULL,
+            added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(tg_id, film_id)
+        )""")
+        # Ratings
+        await db.execute("""CREATE TABLE IF NOT EXISTS ratings(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            tg_id INTEGER NOT NULL,
+            film_id INTEGER NOT NULL,
+            score INTEGER NOT NULL CHECK(score >= 1 AND score <= 5),
+            rated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(tg_id, film_id)
+        )""")
+        # Watch history
+        await db.execute("""CREATE TABLE IF NOT EXISTS watch_history(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            tg_id INTEGER NOT NULL,
+            film_id INTEGER NOT NULL,
+            watched_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )""")
+        await db.execute(
+            "CREATE INDEX IF NOT EXISTS idx_fav_user ON favorites(tg_id)"
+        )
+        await db.execute(
+            "CREATE INDEX IF NOT EXISTS idx_ratings_film ON ratings(film_id)"
+        )
+        await db.execute(
+            "CREATE INDEX IF NOT EXISTS idx_history_user ON watch_history(tg_id)"
+        )
         await db.commit()
 
     # Migrate existing data (add missing columns safely)

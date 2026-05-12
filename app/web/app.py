@@ -19,7 +19,7 @@ from app.core.security import (
     hash_password, verify_password,
 )
 from app.core.logging import logger
-from app.db.database import init_databases
+from app.db.database import init_databases, films_db
 from app.repositories.film_repository import film_repository
 from app.repositories.user_repository import user_repository
 from app.services.tmdb_service import tmdb_service
@@ -309,6 +309,126 @@ def create_app() -> FastAPI:
         from app.updater import trigger_update
         result = trigger_update()
         return JSONResponse(result, status_code=202 if result.get("status") == "started" else 200)
+
+    # ========== Health Check ==========
+
+    @app.get("/api/health")
+    async def health_check(request: Request):
+        """Public health check endpoint."""
+        import time
+        import platform
+        try:
+            # Quick DB check
+            await films_db.fetch_one("SELECT 1")
+            db_ok = True
+        except Exception:
+            db_ok = False
+        return JSONResponse({
+            "status": "ok" if db_ok else "degraded",
+            "version": "4.0",
+            "python": platform.python_version(),
+            "database": "ok" if db_ok else "error",
+            "timestamp": int(time.time()),
+        })
+
+    @app.get("/api/system")
+    async def system_info(request: Request):
+        """System information (authenticated)."""
+        require_auth(request)
+        import platform
+        import os
+        try:
+            import psutil
+            mem = psutil.virtual_memory()
+            cpu = psutil.cpu_percent(interval=0.1)
+            disk = psutil.disk_usage(".")
+            sys_info = {
+                "cpu_percent": cpu,
+                "memory_used_mb": round(mem.used / 1024 / 1024),
+                "memory_total_mb": round(mem.total / 1024 / 1024),
+                "memory_percent": mem.percent,
+                "disk_used_gb": round(disk.used / 1024 / 1024 / 1024, 1),
+                "disk_total_gb": round(disk.total / 1024 / 1024 / 1024, 1),
+            }
+        except ImportError:
+            sys_info = {}
+        return JSONResponse({
+            "platform": platform.platform(),
+            "python": platform.python_version(),
+            "pid": os.getpid(),
+            **sys_info,
+        })
+
+    # ========== CSV Export ==========
+
+    @app.get("/api/export/films.csv")
+    async def export_films_csv(request: Request):
+        """Export all films as CSV."""
+        require_auth(request)
+        import csv
+        import io
+        films = await film_repository.get_all()
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow(["id", "code", "name", "genre", "description", "site", "photo_id", "activate"])
+        for f in films:
+            writer.writerow([
+                f.get("id"), f.get("code"), f.get("name"),
+                f.get("genre"), f.get("description", "")[:200],
+                f.get("site"), f.get("photo_id"), f.get("activate"),
+            ])
+        from fastapi.responses import Response
+        return Response(
+            content=output.getvalue(),
+            media_type="text/csv",
+            headers={"Content-Disposition": "attachment; filename=films.csv"},
+        )
+
+    @app.get("/api/export/users.csv")
+    async def export_users_csv(request: Request):
+        """Export all users as CSV."""
+        require_auth(request)
+        import csv
+        import io
+        users = await user_repository.get_all()
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow(["id", "name", "tg_id", "admin", "banned", "referral_code", "referred_by"])
+        for u in users:
+            writer.writerow([
+                u.get("id"), u.get("name"), u.get("tg_id"),
+                u.get("admin"), u.get("banned"),
+                u.get("referral_code"), u.get("referred_by"),
+            ])
+        from fastapi.responses import Response
+        return Response(
+            content=output.getvalue(),
+            media_type="text/csv",
+            headers={"Content-Disposition": "attachment; filename=users.csv"},
+        )
+
+    # ========== Film Toggle Activate ==========
+
+    @app.post("/api/film/{film_id}/toggle-activate")
+    async def toggle_film_activate(request: Request, film_id: int):
+        """Toggle film active/inactive status."""
+        require_auth(request)
+        film = await film_repository.get_by_id(film_id)
+        if not film:
+            raise HTTPException(status_code=404, detail="Фильм не найден")
+        new_status = 0 if film.get("activate") else 1
+        async with films_db.connection() as db:
+            await db.execute(
+                "UPDATE films SET activate = ? WHERE id = ?", (new_status, film_id)
+            )
+            await db.commit()
+        action = "активирован" if new_status else "деактивирован"
+        await sio.emit("notification", {
+            "message": f'Фильм "{film.get("name")}" {action}',
+            "type": "info",
+        })
+        await emit_films()
+        return JSONResponse({"message": f"Фильм {action}", "activate": new_status})
 
     # ========== Helpers ==========
 
