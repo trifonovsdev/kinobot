@@ -1,150 +1,74 @@
-<div align="center">
+# KinoBot v4
 
-# KinoBot
+Modern Telegram film bot with real-time admin panel.
 
-Современный и простой проект для залива трафика.
+## Architecture
 
-[![Python](https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.x-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
-[![Aiogram3](https://img.shields.io/badge/aiogram-3.x-2CA5E0?logo=telegram&logoColor=white)](https://docs.aiogram.dev/)
-
-</div>
-
-KinoBot — состоит из: веб‑админка (FastAPI + Socket.IO) и бот (Aiogram3). Поддерживаются импорт из TMDb, загрузка постеров, базовая статистика, поиск и управление пользователями.
-
-— Быстрый старт —
-
-1) Клонировать репозиторий
-
-```bash
-git clone https://github.com/trifonovsdev/kinobot
-cd kinobot
+```
+app/
+├── bot/            # Telegram bot (aiogram 3)
+│   ├── handlers/   # Route handlers (start, films, profile)
+│   ├── keyboards/  # Inline keyboard factories
+│   └── middlewares/ # Ban, subscription checks
+├── core/           # Settings, security, logging
+├── db/             # Async SQLite with WAL mode
+├── models/         # Pydantic domain models
+├── repositories/   # Data access layer
+├── services/       # Business logic (TMDb, tasks)
+└── web/            # FastAPI admin panel + Socket.IO
 ```
 
-2) Установить зависимости
+## Features
 
-macOS / Linux:
-```bash
-python -m pip install --upgrade pip
-pip install -r requirements.txt
-```
+- **Telegram Bot**: Film search by code, genre picker, profile, referral system
+- **Admin Panel**: Modern glassmorphism UI, dark/light theme, real-time updates
+- **TMDb Import**: Search + batch import with background queue
+- **Security**: Rate-limited login, configurable credentials, CSRF protection
+- **Database**: Async SQLite with WAL mode for better concurrency
+- **Auto-Update**: OTA updates from manifest or directory index
 
-Windows:
-```powershell
-python -m pip install --upgrade pip
-pip install -r requirements.txt
-```
-
-3) Создать `.env` в корне (пример ниже) и запустить
+## Quick Start
 
 ```bash
-python main.py
-# Админка: http://localhost:5555
-```
-
-Содержание
-
-- Возможности
-- Конфигурация (.env)
-- Авто‑обновление
-- Установка и запуск (подробно)
-
-Возможности
-
-- Админ‑панель (FastAPI + Jinja2), уведомления Socket.IO
-- Импорт из TMDb: поиск по названию/ID, популярное, защита от дублей, загрузка постеров
-- Работа с фильмами: добавление/редактирование, коды и обложки
-- Пользователи: роли (траффер/юзер), бан/разбан
-- Уведомление об обновлении и кнопка «Обновить сейчас» в админке
-- Telegram‑бот: поиск по коду, подбор по жанру, реферальная система
-
-Доступ в админ‑панель
-
-- Логин: root
-- Пароль: root
-- Изменение логики логина: `app/web/app.py`
-
-Конфигурация env
-
-Создайте файл `.env` в корне проекта и заполните необходимые параметры:
-
-```bash
-# Телеграм‑бот
-BOT_TOKEN=0              # Токен вашего бота
-
-# Веб‑сервер
-HOST=0.0.0.0             # Адрес прослушивания
-PORT=5555                # Порт
-SECRET_KEY=01c4041d20caa191
-
-UPLOAD_FOLDER=static/uploads
-
-# TMDb
-TMDB_API_KEY=0           # Ключ API v3 (если будете использовать авто-залив)
-TMDB_LANGUAGE=ru-RU
-TMDB_IMAGE_BASE=https://image.tmdb.org/t/p
-
-# Обновления
-AUTO_UPDATE=1            # Включить проверку/предложение обновления при старте
-```
-
-Авто‑обновление
-
-- При запуске бота, происходит проверка обновлений, при успехе предлагается обновиться (y/n)
-- По желанию авто-обновление можно отключить указав в .env `AUTO_UPDATE=0`
-
-Установка и запуск
-
-macOS / Linux
-
-```bash
-# 1) Зависимости
-python -m pip install --upgrade pip
+# 1. Clone and install
 pip install -r requirements.txt
 
-# 2) .env
-# Создайте .env (см. раздел «Конфигурация» выше)
+# 2. Configure
+cp .env.example .env
+# Edit .env with your BOT_TOKEN, ADMIN_PASSWORD, etc.
 
-# 3) Запуск
+# 3. Run
 python main.py
 ```
 
-Windows
+## Configuration
 
-```powershell
-# 1) Зависимости
-python -m pip install --upgrade pip
-pip install -r requirements.txt
+All settings are in `.env` — see `.env.example` for documentation.
 
-# 2) .env
-# Создайте .env (см. раздел «Конфигурация» выше)
+**Required:**
+- `BOT_TOKEN` — Telegram bot token from @BotFather
+- `ADMIN_PASSWORD` — Admin panel password (change from default!)
 
-# 3) Запуск
-python main.py
-```
+**Optional:**
+- `TMDB_API_KEY` — For TMDb import feature
+- `CHANNELS` — JSON array of channels for subscription check
+- `SECRET_KEY` — Session encryption key (auto-generated if not set)
 
-Возможные проблемы
+## Tech Stack
 
-- `TMDB_API_KEY не задан в .env` — зарегайтесь в TMDb и получите апикей, заполните `.env` и перезапустите.
+| Component | Technology |
+|-----------|-----------|
+| Bot | aiogram 3.4 |
+| Web | FastAPI + uvicorn |
+| Real-time | Socket.IO |
+| Database | SQLite (async via aiosqlite, WAL mode) |
+| HTTP Client | httpx (async) |
+| Frontend | Vanilla JS + Chart.js |
 
-MIT License
+## Security
 
-Copyright (c) 2025 TRIFONOVSDEV
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+- Passwords configurable via `.env` (no hardcoded `root/root`)
+- Rate-limited login (5 attempts/minute)
+- Session-based auth with secure random key
+- Input validation via Pydantic models
+- Safe file uploads with extension whitelist

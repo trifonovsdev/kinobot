@@ -1,13 +1,31 @@
+# KinoBot v4 — Dependencies
+# Core Framework
 fastapi==0.111.0
 uvicorn[standard]==0.30.1
-aiogram==3.4.1
-python-socketio==5.11.2
-jinja2==3.1.4
 python-multipart==0.0.9
+
+# Telegram Bot
+aiogram==3.4.1
+
+# Real-time
+python-socketio==5.11.2
+
+# Database (async)
+aiosqlite==0.20.0
+
+# Async HTTP Client
+httpx==0.27.0
+
+# Configuration
 pydantic==2.5.3
 pydantic-settings==2.1.0
 python-dotenv==1.0.1
+
+# Templates
+jinja2==3.1.4
+
+# Security
+werkzeug==3.0.3
+
+# Utilities
 psutil==5.9.5
-uptime==3.0.1
-cachelib==0.9.0
-Werkzeug==3.0.3
