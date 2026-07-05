@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>City Builder</title>
+<link rel="stylesheet" href="/static/game.css">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+  <div id="nameScreen" class="screen">
+    <div class="name-card">
+      <h1>🏗️ City Builder</h1>
+      <p>Придумай название своему будущему мегаполису. Начнёшь с маленького посёлка.</p>
+      <input id="cityNameInput" type="text" maxlength="24" placeholder="Например: Новоград" autocomplete="off">
+      <button id="cityNameSubmit" class="btn primary">Основать город</button>
+      <p id="nameError" class="error"></p>
+    </div>
+  </div>
+
+  <div id="gameScreen" class="screen hidden">
+    <header class="topbar">
+      <div class="city-title">
+        <span id="cityName">—</span>
+        <span id="tierName" class="tier-badge">—</span>
+      </div>
+      <div class="tier-progress">
+        <div id="tierProgressBar" class="bar"><div class="bar-fill"></div></div>
+        <span id="tierProgressText" class="small"></span>
+      </div>
+    </header>
+
+    <section class="resources">
+      <div class="resource">
+        <div class="resource-label">👥 Население</div>
+        <div class="resource-value"><span id="population">0</span> / <span id="capacity">0</span></div>
+      </div>
+      <div class="resource">
+        <div class="resource-label">💰 Казна</div>
+        <div class="resource-value"><span id="money">0</span></div>
+        <div class="resource-sub"><span id="income">0</span>/сек</div>
+      </div>
+      <div class="resource">
+        <div class="resource-label">😊 Счастье</div>
+        <div class="resource-value"><span id="happiness">0</span>%</div>
+        <div class="bar small-bar"><div id="happinessBar" class="bar-fill"></div></div>
+      </div>
+    </section>
+
+    <main id="buildingsList" class="buildings"></main>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="/static/game.js"></script>
+</body>
+</html>
